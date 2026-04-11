@@ -35,19 +35,20 @@ function formatStatementValue(value: number | null): string {
   const absValue = Math.abs(value);
 
   if (absValue >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)}B`;
+    return `${(value / 1_000_000_000).toFixed(2)}B`;
   }
 
   if (absValue >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`;
+    return `${(value / 1_000_000).toFixed(2)}M`;
   }
 
   if (absValue >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`;
+    return `${(value / 1_000).toFixed(2)}K`;
   }
 
   return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 1,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
   }).format(value);
 }
 

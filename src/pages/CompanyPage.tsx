@@ -35,6 +35,38 @@ function getLatestAnnualReportPeriod(
   return sortedPeriods[0] ?? "N/A";
 }
 
+function HeaderItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div style={{ minWidth: "180px" }}>
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#7a7a7a",
+          marginBottom: "4px",
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "18px",
+          fontWeight: 600,
+          lineHeight: 1.3,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyPage() {
   const [inputTicker, setInputTicker] = useState("NVDA");
   const [submittedTicker, setSubmittedTicker] = useState("NVDA");
@@ -42,9 +74,19 @@ export default function CompanyPage() {
   const { data, isLoading, isError, error } = useFinancialDataset(submittedTicker);
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1>EquiScale</h1>
-      <p>Company financials viewer</p>
+    <div
+      style={{
+        padding: "24px",
+        maxWidth: "1200px",
+        margin: "0 auto",
+        background: "#f7f8fa",
+        minHeight: "100vh",
+      }}
+    >
+      <h1 style={{ marginBottom: "8px" }}>EquiScale</h1>
+      <p style={{ marginTop: 0, color: "#666", marginBottom: "24px" }}>
+        Company financials viewer
+      </p>
 
       <form
         onSubmit={(e) => {
@@ -57,27 +99,105 @@ export default function CompanyPage() {
           value={inputTicker}
           onChange={(e) => setInputTicker(e.target.value)}
           placeholder="Enter ticker, e.g. NVDA"
-          style={{ padding: "8px 12px", minWidth: "240px" }}
+          style={{
+            padding: "10px 12px",
+            minWidth: "240px",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+          }}
         />
-        <button type="submit">Load</button>
+        <button
+          type="submit"
+          style={{
+            padding: "10px 14px",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Load
+        </button>
       </form>
 
       {isLoading && <p>Loading dataset...</p>}
 
       {isError && (
-        <p>
+        <div
+          style={{
+            padding: "16px",
+            border: "1px solid #f0caca",
+            borderRadius: "12px",
+            background: "#fff5f5",
+            color: "#8a2d2d",
+          }}
+        >
           Error: {error instanceof Error ? error.message : "Unknown error"}
-        </p>
+        </div>
       )}
 
       {data && (
         <div>
-          <h2>{data.ticker}</h2>
-          <p>
-            Latest annual report filed:{" "}
-            {getLatestAnnualReportPeriod(data.income_statement)}
-          </p>
-          <p>Last updated: {formatLastUpdated(data.last_updated)}</p>
+          <section
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "16px",
+              background: "#fff",
+              padding: "24px",
+              marginBottom: "24px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "24px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#7a7a7a",
+                    marginBottom: "6px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Company
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "32px",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {data.ticker}
+                </h2>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "40px",
+                  flexWrap: "wrap",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <HeaderItem
+                  label="Latest annual report filed"
+                  value={getLatestAnnualReportPeriod(data.income_statement)}
+                />
+                <HeaderItem
+                  label="Last updated"
+                  value={formatLastUpdated(data.last_updated)}
+                />
+              </div>
+            </div>
+          </section>
 
           <MetricCards metrics={data.metrics} />
 

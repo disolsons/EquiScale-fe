@@ -45,7 +45,7 @@ function formatPercent(value: number | null): string {
     return "N/A";
   }
 
-  return `${(value * 100).toFixed(1)}%`;
+  return `${(value * 100).toFixed(2)}%`;
 }
 
 function formatCurrencyCompact(value: number | null): string {
@@ -55,7 +55,8 @@ function formatCurrencyCompact(value: number | null): string {
 
   return new Intl.NumberFormat("en-US", {
     notation: "compact",
-    maximumFractionDigits: 1,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
