@@ -2,7 +2,7 @@ export type FinancialReportResponse = {
   ticker: string;
   report_type: string;
   periods: string[];
-  values: Record<string, Record<string, number | null>>;
+  concepts: Record<string, Record<string, number | null>>;
 };
 
 export type FinancialMetricsResponse = {
