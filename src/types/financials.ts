@@ -18,3 +18,19 @@ export type FinancialDatasetResponse = {
   metrics: FinancialMetricsResponse | null;
   last_updated: string | null;
 };
+
+export type MetricDependencyResponse = {
+  concept: string;
+  statement_type: string | null;
+  values: Record<string, number | null>;
+  trace_endpoint: string | null;
+};
+
+export type MetricTraceResponse = {
+  ticker: string;
+  category: string;
+  metric_name: string;
+  metric_values: Record<string, number | null>;
+  formula: string;
+  dependencies: MetricDependencyResponse[];
+};

@@ -199,8 +199,7 @@ export default function CompanyPage() {
             </div>
           </section>
 
-          <MetricCards metrics={data.metrics} />
-
+          <MetricCards ticker={data.ticker} metrics={data.metrics} />
           <FinancialReportTable
             title="Income Statement"
             report={data.income_statement}
