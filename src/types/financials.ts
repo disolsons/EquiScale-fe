@@ -34,3 +34,13 @@ export type MetricTraceResponse = {
   formula: string;
   dependencies: MetricDependencyResponse[];
 };
+
+export type ConceptTraceResponse = {
+  ticker: string;
+  statement_type: string;
+  concept: string;
+  concept_values: Record<string, number | null>;
+  selected_raw_tag: string | null;
+  selected_raw_label: string | null;
+  raw_values: Record<string, number | null> | null;
+};

@@ -201,16 +201,19 @@ export default function CompanyPage() {
 
           <MetricCards ticker={data.ticker} metrics={data.metrics} />
           <FinancialReportTable
+            ticker={data.ticker}
             title="Income Statement"
             report={data.income_statement}
           />
 
           <FinancialReportTable
+            ticker={data.ticker}
             title="Balance Sheet"
             report={data.balance_sheet}
           />
 
           <FinancialReportTable
+            ticker={data.ticker}
             title="Cash Flow"
             report={data.cash_flow}
           />

@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import type { FinancialReportResponse } from "../types/financials";
+import TraceSidePanel from "./TraceSidePanel";
+import ConceptTracePanelContent from "./ConceptTracePanelContent";
+import { useConceptTrace } from "../hooks/useConceptTrace";
 
 type FinancialReportTableProps = {
+  ticker: string;
   title: string;
   report: FinancialReportResponse | null;
 };
@@ -47,8 +51,8 @@ function formatStatementValue(value: number | null): string {
   }
 
   return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -78,10 +82,12 @@ function getOrderedConcepts(
 }
 
 export default function FinancialReportTable({
+  ticker,
   title,
   report,
 }: FinancialReportTableProps) {
   const [showAll, setShowAll] = useState(false);
+  const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
 
   const periods = report?.periods ?? [];
   const concepts = report?.concepts ?? {};
@@ -99,6 +105,13 @@ export default function FinancialReportTable({
   }, [report, conceptNames]);
 
   const displayedConcepts = showAll ? [...featured, ...remaining] : featured;
+
+  const conceptTraceQuery = useConceptTrace(
+    ticker,
+    report?.report_type ?? null,
+    selectedConcept,
+    selectedConcept !== null
+  );
 
   if (!report) {
     return null;
@@ -148,7 +161,7 @@ export default function FinancialReportTable({
             style={{
               width: "100%",
               borderCollapse: "collapse",
-              minWidth: "720px",
+              minWidth: "820px",
             }}
           >
             <thead>
@@ -178,6 +191,18 @@ export default function FinancialReportTable({
                     {period}
                   </th>
                 ))}
+
+                <th
+                  style={{
+                    textAlign: "right",
+                    padding: "14px 16px",
+                    borderBottom: "1px solid #ddd",
+                    fontSize: "14px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Source
+                </th>
               </tr>
             </thead>
 
@@ -215,12 +240,57 @@ export default function FinancialReportTable({
                       {formatStatementValue(report.concepts[concept]?.[period] ?? null)}
                     </td>
                   ))}
+
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      borderBottom: "1px solid #eee",
+                      textAlign: "right",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedConcept(concept)}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        color: "#1d4ed8",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      View source
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      <TraceSidePanel
+        isOpen={selectedConcept !== null}
+        title={selectedConcept ? formatConceptLabel(selectedConcept) : "Concept trace"}
+        onClose={() => setSelectedConcept(null)}
+      >
+        <ConceptTracePanelContent
+          trace={conceptTraceQuery.data ?? null}
+          isLoading={conceptTraceQuery.isLoading}
+          errorMessage={
+            conceptTraceQuery.isError
+              ? conceptTraceQuery.error instanceof Error
+                ? conceptTraceQuery.error.message
+                : "Failed to load concept trace"
+              : null
+          }
+          title={selectedConcept ? formatConceptLabel(selectedConcept) : "Concept trace"}
+        />
+      </TraceSidePanel>
     </section>
   );
 }

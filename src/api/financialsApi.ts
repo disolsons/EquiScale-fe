@@ -1,6 +1,7 @@
 import type {
   FinancialDatasetResponse,
   MetricTraceResponse,
+  ConceptTraceResponse,
 } from "../types/financials";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -39,6 +40,27 @@ export async function getMetricTrace(
   if (!response.ok) {
     throw new Error(
       `Failed to fetch metric trace for ${metricName} (${normalizedTicker})`
+    );
+  }
+
+  return response.json();
+}
+
+
+export async function getConceptTrace(
+  ticker: string,
+  statementType: string,
+  concept: string
+): Promise<ConceptTraceResponse> {
+  const normalizedTicker = ticker.trim().toUpperCase();
+
+  const response = await fetch(
+    `${API_BASE_URL}/financials/${normalizedTicker}/concepts/${statementType}/${concept}/trace`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch concept trace for ${concept} (${normalizedTicker})`
     );
   }
 
