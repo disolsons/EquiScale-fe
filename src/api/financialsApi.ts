@@ -3,6 +3,7 @@ import type {
   MetricTraceResponse,
   ConceptTraceResponse,
   CompanyProfileResponse,
+  StockPriceSnapshotResponse,
 } from "../types/financials";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -83,6 +84,27 @@ export async function getCompanyProfile(
 
   if (!response.ok) {
     throw new Error(`Failed to fetch company profile for ${normalizedTicker}`);
+  }
+
+  return response.json();
+}
+
+
+export async function getCompanyPrice(
+  ticker: string
+): Promise<StockPriceSnapshotResponse> {
+  const normalizedTicker = ticker.trim().toUpperCase();
+
+  if (!normalizedTicker) {
+    throw new Error("Ticker is required");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/companies/${normalizedTicker}/price`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company price for ${normalizedTicker}`);
   }
 
   return response.json();

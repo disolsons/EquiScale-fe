@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFinancialDataset } from "../hooks/useFinancialDataset";
 import { useCompanyProfile } from "../hooks/useCompanyProfile";
+import { useCompanyPrice } from "../hooks/useCompanyPrice";
 import MetricCards from "../components/MetricCards";
 import FinancialReportTable from "../components/FinancialReportTable";
 import type { FinancialReportResponse } from "../types/financials";
@@ -63,6 +64,36 @@ function formatFilingDate(value: string | null): string {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(date);
+}
+
+function formatPriceDate(value: string | null): string {
+  if (!value) {
+    return "N/A";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function formatPrice(value: number | null, currency: string | null): string {
+  if (value === null || value === undefined) {
+    return "N/A";
+  }
+
+  const formatted = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+  return currency ? `${formatted} ${currency}` : formatted;
 }
 
 function HeaderItem({
@@ -156,6 +187,53 @@ function FilingLinkBlock({
   );
 }
 
+function PriceBlock({
+  closePrice,
+  currency,
+  priceDate,
+}: {
+  closePrice: number | null;
+  currency: string | null;
+  priceDate: string | null;
+}) {
+  return (
+    <div style={{ minWidth: "180px" }}>
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#7a7a7a",
+          marginBottom: "6px",
+          fontWeight: 500,
+        }}
+      >
+        Last close
+      </div>
+
+      <div
+        style={{
+          fontSize: "20px",
+          fontWeight: 700,
+          lineHeight: 1.2,
+          color: "#111",
+          marginBottom: "6px",
+        }}
+      >
+        {formatPrice(closePrice, currency)}
+      </div>
+
+      <div
+        style={{
+          fontSize: "13px",
+          color: "#666",
+          fontWeight: 500,
+        }}
+      >
+        as of {formatPriceDate(priceDate)}
+      </div>
+    </div>
+  );
+}
+
 export default function CompanyPage() {
   const [inputTicker, setInputTicker] = useState("NVDA");
   const [submittedTicker, setSubmittedTicker] = useState("NVDA");
@@ -173,6 +251,13 @@ export default function CompanyPage() {
     isError: isProfileError,
     error: profileError,
   } = useCompanyProfile(submittedTicker);
+
+  const {
+    data: price,
+    isLoading: isPriceLoading,
+    isError: isPriceError,
+    error: priceError,
+  } = useCompanyPrice(submittedTicker);
 
   return (
     <div
@@ -221,7 +306,9 @@ export default function CompanyPage() {
         </button>
       </form>
 
-      {(isDatasetLoading || isProfileLoading) && <p>Loading company data...</p>}
+      {(isDatasetLoading || isProfileLoading || isPriceLoading) && (
+        <p>Loading company data...</p>
+      )}
 
       {isDatasetError && (
         <div
@@ -252,6 +339,22 @@ export default function CompanyPage() {
         >
           Error:{" "}
           {profileError instanceof Error ? profileError.message : "Unknown profile error"}
+        </div>
+      )}
+
+      {isPriceError && (
+        <div
+          style={{
+            padding: "16px",
+            border: "1px solid #f0caca",
+            borderRadius: "12px",
+            background: "#fff5f5",
+            color: "#8a2d2d",
+            marginBottom: "16px",
+          }}
+        >
+          Error:{" "}
+          {priceError instanceof Error ? priceError.message : "Unknown price error"}
         </div>
       )}
 
@@ -319,13 +422,22 @@ export default function CompanyPage() {
                   justifyContent: "flex-end",
                 }}
               >
+                <PriceBlock
+                  closePrice={price?.close_price ?? null}
+                  currency={price?.currency ?? null}
+                  priceDate={price?.price_date ?? null}
+                />
                 <HeaderItem
                   label="Latest annual report filed"
                   value={getLatestAnnualReportPeriod(data.income_statement)}
                 />
                 <FilingLinkBlock
                   form={profile?.latest_annual_form ?? null}
-                  filingDate={profile?.latest_annual_filing_date ?? null}
+                  filingDate={
+                    profile?.latest_annual_filing_date
+                      ? String(profile.latest_annual_filing_date)
+                      : null
+                  }
                   filingUrl={profile?.latest_annual_filing_url ?? null}
                 />
                 <HeaderItem

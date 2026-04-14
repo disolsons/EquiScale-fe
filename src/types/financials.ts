@@ -56,3 +56,11 @@ export type CompanyProfileResponse = {
   latest_annual_filing_date: string | null;
   latest_annual_filing_url: string | null;
 };
+
+export type StockPriceSnapshotResponse = {
+  ticker: string;
+  close_price: number | null;
+  currency: string | null;
+  price_date: string | null;
+  exchange: string | null;
+};
