@@ -263,7 +263,7 @@ export default function FinancialReportTable({
                         whiteSpace: "nowrap",
                       }}
                     >
-                      View source
+                      Source
                     </button>
                   </td>
                 </tr>

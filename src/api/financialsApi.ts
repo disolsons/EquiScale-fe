@@ -2,6 +2,7 @@ import type {
   FinancialDatasetResponse,
   MetricTraceResponse,
   ConceptTraceResponse,
+  CompanyProfileResponse,
 } from "../types/financials";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -62,6 +63,26 @@ export async function getConceptTrace(
     throw new Error(
       `Failed to fetch concept trace for ${concept} (${normalizedTicker})`
     );
+  }
+
+  return response.json();
+}
+
+export async function getCompanyProfile(
+  ticker: string
+): Promise<CompanyProfileResponse> {
+  const normalizedTicker = ticker.trim().toUpperCase();
+
+  if (!normalizedTicker) {
+    throw new Error("Ticker is required");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/companies/${normalizedTicker}/profile`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch company profile for ${normalizedTicker}`);
   }
 
   return response.json();

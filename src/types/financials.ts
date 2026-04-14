@@ -44,3 +44,15 @@ export type ConceptTraceResponse = {
   selected_raw_label: string | null;
   raw_values: Record<string, number | null> | null;
 };
+
+export type CompanyProfileResponse = {
+  ticker: string;
+  company_name: string | null;
+  exchange: string | null;
+  industry: string | null;
+  sic: string | null;
+  fiscal_year_end: string | null;
+  latest_annual_form: string | null;
+  latest_annual_filing_date: string | null;
+  latest_annual_filing_url: string | null;
+};

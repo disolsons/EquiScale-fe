@@ -123,7 +123,7 @@ function MetricCard({ title, value, period, onOpenTrace }: MetricCardProps) {
           fontWeight: 600,
         }}
       >
-        How calculated
+        Formula
       </button>
     </div>
   );

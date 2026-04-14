@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFinancialDataset } from "../hooks/useFinancialDataset";
+import { useCompanyProfile } from "../hooks/useCompanyProfile";
 import MetricCards from "../components/MetricCards";
 import FinancialReportTable from "../components/FinancialReportTable";
 import type { FinancialReportResponse } from "../types/financials";
@@ -35,6 +36,35 @@ function getLatestAnnualReportPeriod(
   return sortedPeriods[0] ?? "N/A";
 }
 
+function formatFiscalYearEnd(value: string | null): string {
+  if (!value) {
+    return "N/A";
+  }
+
+  if (value.length === 4) {
+    return `${value.slice(0, 2)}/${value.slice(2)}`;
+  }
+
+  return value;
+}
+
+function formatFilingDate(value: string | null): string {
+  if (!value) {
+    return "N/A";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function HeaderItem({
   label,
   value,
@@ -48,7 +78,7 @@ function HeaderItem({
         style={{
           fontSize: "12px",
           color: "#7a7a7a",
-          marginBottom: "4px",
+          marginBottom: "6px",
           fontWeight: 500,
         }}
       >
@@ -56,9 +86,10 @@ function HeaderItem({
       </div>
       <div
         style={{
-          fontSize: "18px",
+          fontSize: "16px",
           fontWeight: 600,
-          lineHeight: 1.3,
+          lineHeight: 1.35,
+          color: "#222",
         }}
       >
         {value}
@@ -67,11 +98,81 @@ function HeaderItem({
   );
 }
 
+function FilingLinkBlock({
+  form,
+  filingDate,
+  filingUrl,
+}: {
+  form: string | null;
+  filingDate: string | null;
+  filingUrl: string | null;
+}) {
+  const filingSummary =
+    form || filingDate
+      ? [form, formatFilingDate(filingDate)].filter(Boolean).join(" · ")
+      : "N/A";
+
+  return (
+    <div style={{ minWidth: "220px" }}>
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#7a7a7a",
+          marginBottom: "6px",
+          fontWeight: 500,
+        }}
+      >
+        Latest annual filing
+      </div>
+
+      <div
+        style={{
+          fontSize: "16px",
+          fontWeight: 600,
+          lineHeight: 1.35,
+          color: "#222",
+          marginBottom: filingUrl ? "6px" : 0,
+        }}
+      >
+        {filingSummary}
+      </div>
+
+      {filingUrl ? (
+        <a
+          href={filingUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            fontSize: "13px",
+            fontWeight: 600,
+            color: "#1d4ed8",
+            textDecoration: "none",
+          }}
+        >
+          Open filing
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 export default function CompanyPage() {
   const [inputTicker, setInputTicker] = useState("NVDA");
   const [submittedTicker, setSubmittedTicker] = useState("NVDA");
 
-  const { data, isLoading, isError, error } = useFinancialDataset(submittedTicker);
+  const {
+    data,
+    isLoading: isDatasetLoading,
+    isError: isDatasetError,
+    error: datasetError,
+  } = useFinancialDataset(submittedTicker);
+
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
+    error: profileError,
+  } = useCompanyProfile(submittedTicker);
 
   return (
     <div
@@ -120,9 +221,9 @@ export default function CompanyPage() {
         </button>
       </form>
 
-      {isLoading && <p>Loading dataset...</p>}
+      {(isDatasetLoading || isProfileLoading) && <p>Loading company data...</p>}
 
-      {isError && (
+      {isDatasetError && (
         <div
           style={{
             padding: "16px",
@@ -130,9 +231,27 @@ export default function CompanyPage() {
             borderRadius: "12px",
             background: "#fff5f5",
             color: "#8a2d2d",
+            marginBottom: "16px",
           }}
         >
-          Error: {error instanceof Error ? error.message : "Unknown error"}
+          Error:{" "}
+          {datasetError instanceof Error ? datasetError.message : "Unknown dataset error"}
+        </div>
+      )}
+
+      {isProfileError && (
+        <div
+          style={{
+            padding: "16px",
+            border: "1px solid #f0caca",
+            borderRadius: "12px",
+            background: "#fff5f5",
+            color: "#8a2d2d",
+            marginBottom: "16px",
+          }}
+        >
+          Error:{" "}
+          {profileError instanceof Error ? profileError.message : "Unknown profile error"}
         </div>
       )}
 
@@ -154,9 +273,10 @@ export default function CompanyPage() {
                 alignItems: "flex-start",
                 gap: "24px",
                 flexWrap: "wrap",
+                marginBottom: "24px",
               }}
             >
-              <div>
+              <div style={{ minWidth: "280px", flex: 1 }}>
                 <div
                   style={{
                     fontSize: "12px",
@@ -171,12 +291,24 @@ export default function CompanyPage() {
                 <h2
                   style={{
                     margin: 0,
-                    fontSize: "32px",
+                    fontSize: "28px",
                     lineHeight: 1.1,
                   }}
                 >
-                  {data.ticker}
+                  {profile?.company_name ?? data.ticker}
                 </h2>
+
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#666",
+                    marginTop: "10px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {data.ticker}
+                  {profile?.exchange ? ` · ${profile.exchange}` : ""}
+                </div>
               </div>
 
               <div
@@ -191,15 +323,40 @@ export default function CompanyPage() {
                   label="Latest annual report filed"
                   value={getLatestAnnualReportPeriod(data.income_statement)}
                 />
+                <FilingLinkBlock
+                  form={profile?.latest_annual_form ?? null}
+                  filingDate={profile?.latest_annual_filing_date ?? null}
+                  filingUrl={profile?.latest_annual_filing_url ?? null}
+                />
                 <HeaderItem
                   label="Last updated"
                   value={formatLastUpdated(data.last_updated)}
                 />
               </div>
             </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "40px",
+                flexWrap: "wrap",
+                paddingTop: "20px",
+                borderTop: "1px solid #eee",
+              }}
+            >
+              <HeaderItem
+                label="Industry"
+                value={profile?.industry ?? "N/A"}
+              />
+              <HeaderItem
+                label="Fiscal year end"
+                value={formatFiscalYearEnd(profile?.fiscal_year_end ?? null)}
+              />
+            </div>
           </section>
 
           <MetricCards ticker={data.ticker} metrics={data.metrics} />
+
           <FinancialReportTable
             ticker={data.ticker}
             title="Income Statement"
