@@ -6,6 +6,53 @@ type CustomFormulaPanelProps = {
   ticker: string;
 };
 
+type InputGroup = {
+  title: string;
+  inputs: string[];
+};
+
+const AVAILABLE_INPUT_GROUPS: InputGroup[] = [
+  {
+    title: "Statement concepts",
+    inputs: [
+      "revenue",
+      "gross_profit",
+      "operating_income",
+      "net_income",
+      "diluted_eps",
+      "operating_cash_flow",
+      "capital_expenditures",
+      "total_assets",
+      "shareholder_equity",
+      "total_liabilities",
+    ],
+  },
+  {
+    title: "Built-in metrics",
+    inputs: [
+      "gross_margin",
+      "operating_margin",
+      "net_margin",
+      "free_cash_flow",
+      "free_cash_flow_margin",
+      "revenue_growth_yoy",
+      "net_income_growth_yoy",
+      "diluted_eps_growth_yoy",
+      "roa_ending",
+      "roe_ending",
+      "roa_avg_assets",
+      "roe_avg_equity",
+    ],
+  },
+  {
+    title: "Derived inputs",
+    inputs: [
+      "avg_total_assets",
+      "avg_shareholder_equity",
+    ],
+  },
+];
+
 function formatFormulaValue(value: number | null): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
@@ -168,11 +215,104 @@ function FormulaResultTable({ result }: { result: CustomFormulaResponse }) {
   );
 }
 
+function AvailableInputs({
+  onInsert,
+}: {
+  onInsert: (inputName: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        marginTop: "18px",
+        padding: "14px 16px",
+        border: "1px solid #eee",
+        borderRadius: "12px",
+        background: "#fafafa",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "13px",
+          fontWeight: 700,
+          marginBottom: "6px",
+        }}
+      >
+        Available inputs
+      </div>
+
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#666",
+          marginBottom: "12px",
+          lineHeight: 1.5,
+        }}
+      >
+        Click an input to insert it into the expression. Use{" "}
+        <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> and
+        parentheses to build formulas.
+      </div>
+
+      <div style={{ display: "grid", gap: "12px" }}>
+        {AVAILABLE_INPUT_GROUPS.map((group) => (
+          <div key={group.title}>
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#777",
+                fontWeight: 600,
+                marginBottom: "8px",
+              }}
+            >
+              {group.title}
+            </div>
+
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {group.inputs.map((inputName) => (
+                <button
+                  key={inputName}
+                  type="button"
+                  onClick={() => onInsert(inputName)}
+                  style={{
+                    border: "1px solid #e5e7eb",
+                    background: "#fff",
+                    borderRadius: "999px",
+                    padding: "5px 9px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#374151",
+                    cursor: "pointer",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {inputName}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomFormulaPanel({ ticker }: CustomFormulaPanelProps) {
   const [formulaName, setFormulaName] = useState("Custom FCF Margin");
   const [expression, setExpression] = useState("free_cash_flow / revenue");
 
   const mutation = useCalculateCustomFormula(ticker);
+
+  function insertInputIntoExpression(inputName: string) {
+    setExpression((currentExpression) => {
+      const trimmedExpression = currentExpression.trim();
+
+      if (!trimmedExpression) {
+        return inputName;
+      }
+
+      return `${trimmedExpression} ${inputName}`;
+    });
+  }
 
   return (
     <section
@@ -195,8 +335,7 @@ export default function CustomFormulaPanel({ ticker }: CustomFormulaPanelProps) 
           }}
         >
           Calculate an ad hoc metric using normalized concepts or existing
-          metrics, such as <code>net_income / revenue</code> or{" "}
-          <code>free_cash_flow / revenue</code>.
+          metrics.
         </p>
       </div>
 
@@ -286,6 +425,8 @@ export default function CustomFormulaPanel({ ticker }: CustomFormulaPanelProps) 
           </button>
         </div>
       </form>
+
+      <AvailableInputs onInsert={insertInputIntoExpression} />
 
       {mutation.isError ? (
         <div
