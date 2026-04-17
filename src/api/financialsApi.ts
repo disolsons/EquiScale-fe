@@ -4,6 +4,8 @@ import type {
   ConceptTraceResponse,
   CompanyProfileResponse,
   StockPriceSnapshotResponse,
+  CustomFormulaRequest,
+  CustomFormulaResponse,
 } from "../types/financials";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
@@ -109,3 +111,35 @@ export async function getCompanyPrice(
 
   return response.json();
 }
+
+
+export async function calculateCustomFormula(
+  ticker: string,
+  request: CustomFormulaRequest
+): Promise<CustomFormulaResponse> {
+  const normalizedTicker = ticker.trim().toUpperCase();
+
+  if (!normalizedTicker) {
+    throw new Error("Ticker is required");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/financials/${normalizedTicker}/formulas/calculate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    }
+  );
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const detail = payload?.detail ?? "Failed to calculate custom formula";
+    throw new Error(detail);
+  }
+
+  return response.json();
+}
+

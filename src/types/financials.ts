@@ -64,3 +64,16 @@ export type StockPriceSnapshotResponse = {
   price_date: string | null;
   exchange: string | null;
 };
+
+export type CustomFormulaRequest = {
+  formula_name: string;
+  expression: string;
+};
+
+export type CustomFormulaResponse = {
+  ticker: string;
+  formula_name: string;
+  expression: string;
+  values: Record<string, number | null>;
+  dependencies: string[];
+};

@@ -31,6 +31,12 @@ const PRIORITY_CONCEPTS_BY_REPORT_TYPE: Record<string, string[]> = {
   ],
 };
 
+const EPS_NORMALIZED_CONCEPTS = new Set(["basic_eps", "diluted_eps"]);
+
+function isEpsConcept(concept: string): boolean {
+  return EPS_NORMALIZED_CONCEPTS.has(concept);
+}
+
 function formatStatementValue(value: number | null): string {
   if (value === null || value === undefined) {
     return "—";
@@ -57,7 +63,7 @@ function formatStatementValue(value: number | null): string {
 }
 
 function formatConceptLabel(concept: string): string {
-  return concept
+  const label = concept
     .split("_")
     .map((part) => {
       const lower = part.toLowerCase();
@@ -67,6 +73,8 @@ function formatConceptLabel(concept: string): string {
       return part.charAt(0).toUpperCase() + part.slice(1);
     })
     .join(" ");
+
+  return isEpsConcept(concept) ? `${label} *` : label;
 }
 
 function getOrderedConcepts(
@@ -105,6 +113,10 @@ export default function FinancialReportTable({
   }, [report, conceptNames]);
 
   const displayedConcepts = showAll ? [...featured, ...remaining] : featured;
+
+  const hasDisplayedEpsConcept = displayedConcepts.some((concept) =>
+    isEpsConcept(concept)
+  );
 
   const conceptTraceQuery = useConceptTrace(
     ticker,
@@ -272,6 +284,21 @@ export default function FinancialReportTable({
           </table>
         </div>
       </div>
+
+      {hasDisplayedEpsConcept && (
+        <div
+          style={{
+            marginTop: "10px",
+            fontSize: "12px",
+            color: "#666",
+            lineHeight: 1.5,
+          }}
+        >
+          * EPS values may be normalized when share counts changed materially
+          after the fiscal year, so periods are shown on a consistent share
+          basis.
+        </div>
+      )}
 
       <TraceSidePanel
         isOpen={selectedConcept !== null}

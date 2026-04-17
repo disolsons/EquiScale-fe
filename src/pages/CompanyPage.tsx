@@ -5,6 +5,7 @@ import { useCompanyPrice } from "../hooks/useCompanyPrice";
 import MetricCards from "../components/MetricCards";
 import FinancialReportTable from "../components/FinancialReportTable";
 import type { FinancialReportResponse } from "../types/financials";
+import CustomFormulaPanel from "../components/CustomFormulaPanel";
 
 function formatLastUpdated(value: string | null): string {
   if (!value) {
@@ -469,6 +470,7 @@ export default function CompanyPage() {
 
           <MetricCards ticker={data.ticker} metrics={data.metrics} />
 
+          <CustomFormulaPanel ticker={data.ticker} />
           <FinancialReportTable
             ticker={data.ticker}
             title="Income Statement"
