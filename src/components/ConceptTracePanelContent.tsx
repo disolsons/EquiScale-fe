@@ -138,7 +138,7 @@ export default function ConceptTracePanelContent({
         }}
       >
         <div style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
-          Mapped from filing line item
+          Filing line item used
         </div>
         <div
           style={{
@@ -151,7 +151,14 @@ export default function ConceptTracePanelContent({
           {trace.selected_raw_label ?? "No filing label available"}
         </div>
 
-        <div style={{ fontSize: "12px", color: "#777", marginTop: "12px", marginBottom: "6px" }}>
+        <div
+          style={{
+            fontSize: "12px",
+            color: "#777",
+            marginTop: "12px",
+            marginBottom: "6px",
+          }}
+        >
           SEC tag
         </div>
         <div
@@ -169,7 +176,7 @@ export default function ConceptTracePanelContent({
       <ValuesBlock title="Values used" values={trace.concept_values} />
 
       {rawValuesDiffer ? (
-        <ValuesBlock title="Raw source values" values={trace.raw_values} />
+        <ValuesBlock title="Source values available" values={trace.raw_values} />
       ) : null}
 
       <section
