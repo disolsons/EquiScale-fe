@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import type { FinancialMetricsResponse } from "../types/financials";
+import type {
+  FinancialMetricsResponse,
+  MetricPeriodValueResponse,
+} from "../types/financials";
 import { useMetricTrace } from "../hooks/useMetricTrace";
 import TraceSidePanel from "./TraceSidePanel";
 import MetricTracePanelContent from "./MetricTracePanelContent";
@@ -16,6 +19,7 @@ type MetricCardsProps = {
 type MetricValueResult = {
   value: number | null;
   period: string | null;
+  suppressionCode: string | null;
 };
 
 type MetricCardConfig = {
@@ -29,39 +33,56 @@ function getLatestMetricValue(
   metricName: string
 ): MetricValueResult {
   if (!metrics) {
-    return { value: null, period: null };
+    return { value: null, period: null, suppressionCode: null };
   }
 
   const categoryMetrics = metrics.categories[category];
   if (!categoryMetrics) {
-    return { value: null, period: null };
+    return { value: null, period: null, suppressionCode: null };
   }
 
   const metricValues = categoryMetrics[metricName];
-  if (!metricValues) {
-    return { value: null, period: null };
+  if (!metricValues || metricValues.length === 0) {
+    return { value: null, period: null, suppressionCode: null };
   }
 
-  const periods = Object.keys(metricValues).sort().reverse();
+  const sortedValues = [...metricValues].sort((a, b) =>
+    b.period.localeCompare(a.period)
+  );
 
-  for (const period of periods) {
-    const value = metricValues[period];
-    if (value !== null && value !== undefined) {
-      return { value, period };
+  for (const entry of sortedValues) {
+    if (entry.value !== null && entry.value !== undefined) {
+      return {
+        value: entry.value,
+        period: entry.period,
+        suppressionCode: entry.suppression_code,
+      };
     }
   }
 
-  return { value: null, period: null };
+  const latestEntry = sortedValues[0];
+  return {
+    value: latestEntry.value,
+    period: latestEntry.period,
+    suppressionCode: latestEntry.suppression_code,
+  };
 }
 
 type MetricCardProps = {
   title: string;
   value: string;
   period: string | null;
+  suppressionCode: string | null;
   onOpenTrace: () => void;
 };
 
-function MetricCard({ title, value, period, onOpenTrace }: MetricCardProps) {
+function MetricCard({
+  title,
+  value,
+  period,
+  suppressionCode,
+  onOpenTrace,
+}: MetricCardProps) {
   return (
     <div
       style={{
@@ -106,6 +127,18 @@ function MetricCard({ title, value, period, onOpenTrace }: MetricCardProps) {
         >
           {period ?? "No period"}
         </div>
+
+        {suppressionCode && (
+          <div
+            style={{
+              marginTop: "6px",
+              fontSize: "12px",
+              color: "#b45309",
+            }}
+          >
+            {suppressionCode}
+          </div>
+        )}
       </div>
 
       <button
@@ -183,6 +216,7 @@ export default function MetricCards({ ticker, metrics }: MetricCardsProps) {
                   displayConfig.format
                 )}
                 period={latestMetricValue.period}
+                suppressionCode={latestMetricValue.suppressionCode}
                 onOpenTrace={() =>
                   setSelectedMetric({
                     title: displayConfig.title,

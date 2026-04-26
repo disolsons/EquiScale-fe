@@ -5,9 +5,15 @@ export type FinancialReportResponse = {
   concepts: Record<string, Record<string, number | null>>;
 };
 
+export type MetricPeriodValueResponse = {
+  period: string;
+  value: number | null;
+  suppression_code: string | null;
+};
+
 export type FinancialMetricsResponse = {
   ticker: string;
-  categories: Record<string, Record<string, Record<string, number | null>>>;
+  categories: Record<string, Record<string, MetricPeriodValueResponse[]>>;
 };
 
 export type FinancialDatasetResponse = {
@@ -31,6 +37,7 @@ export type MetricTraceResponse = {
   category: string;
   metric_name: string;
   metric_values: Record<string, number | null>;
+  suppression_reasons: Record<string, string>;
   formula: string;
   dependencies: MetricDependencyResponse[];
 };

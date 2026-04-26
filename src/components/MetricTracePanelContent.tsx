@@ -43,7 +43,11 @@ function getLatestValue(values: Record<string, number | null>): {
     }
   }
 
-  return { period: null, value: null };
+  const latestPeriod = periods[0] ?? null;
+  return {
+    period: latestPeriod,
+    value: latestPeriod ? values[latestPeriod] ?? null : null,
+  };
 }
 
 export default function MetricTracePanelContent({
@@ -77,6 +81,10 @@ export default function MetricTracePanelContent({
 
   const latestMetricValue = getLatestValue(trace.metric_values);
   const metricDisplayConfig = METRIC_DISPLAY_CONFIG[trace.metric_name];
+  const latestSuppressionReason =
+    latestMetricValue.period && trace.suppression_reasons
+      ? trace.suppression_reasons[latestMetricValue.period] ?? null
+      : null;
 
   return (
     <div style={{ display: "grid", gap: "20px" }}>
@@ -127,6 +135,19 @@ export default function MetricTracePanelContent({
             metricDisplayConfig?.format ?? "number"
           )}
         </div>
+
+        {latestSuppressionReason && (
+          <div
+            style={{
+              marginTop: "8px",
+              fontSize: "13px",
+              color: "#b45309",
+            }}
+          >
+            {latestSuppressionReason}
+          </div>
+        )}
+
         <div style={{ fontSize: "13px", color: "#666", marginTop: "6px" }}>
           Calculated from the dependency values shown below.
         </div>
@@ -139,66 +160,67 @@ export default function MetricTracePanelContent({
 
         <div style={{ display: "grid", gap: "12px" }}>
           {trace.dependencies.map((dependency) => {
-                const isYoyMetric = trace.metric_name.endsWith("_growth_yoy");
-                const latestDependencyValue = getLatestValue(dependency.values);
-                const latestAndPrevious = getLatestAndPreviousValues(dependency.values);
+            const isYoyMetric = trace.metric_name.endsWith("_growth_yoy");
+            const latestDependencyValue = getLatestValue(dependency.values);
+            const latestAndPrevious = getLatestAndPreviousValues(dependency.values);
 
-                return (
-                    <div
-                    key={dependency.concept}
+            return (
+              <div
+                key={dependency.concept}
+                style={{
+                  border: "1px solid #eee",
+                  borderRadius: "12px",
+                  padding: "14px",
+                  background: "#fff",
+                }}
+              >
+                <div style={{ fontSize: "15px", fontWeight: 600, marginBottom: "4px" }}>
+                  {dependency.concept}
+                </div>
+
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
+                  Statement: {dependency.statement_type ?? "Derived / unresolved"}
+                </div>
+
+                {isYoyMetric ? (
+                  <div
                     style={{
-                        border: "1px solid #eee",
-                        borderRadius: "12px",
-                        padding: "14px",
-                        background: "#fff",
+                      display: "grid",
+                      gridTemplateColumns: "72px 1fr",
+                      rowGap: "6px",
+                      columnGap: "10px",
+                      fontSize: "14px",
+                      color: "#444",
                     }}
-                    >
-                    <div style={{ fontSize: "15px", fontWeight: 600, marginBottom: "4px" }}>
-                        {dependency.concept}
+                  >
+                    <div style={{ fontWeight: 500 }}>
+                      {latestAndPrevious.latestPeriod ?? "Latest"}:
+                    </div>
+                    <div style={{ fontWeight: 500 }}>
+                      {formatCompactNumber(latestAndPrevious.latestValue)}
                     </div>
 
-                    <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
-                        Statement: {dependency.statement_type ?? "Derived / unresolved"}
+                    <div style={{ fontWeight: 500 }}>
+                      {latestAndPrevious.previousPeriod ?? "Previous"}:
+                    </div>
+                    <div style={{ fontWeight: 500 }}>
+                      {formatCompactNumber(latestAndPrevious.previousValue)}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: "16px", fontWeight: 600 }}>
+                      {formatCompactNumber(latestDependencyValue.value)}
                     </div>
 
-                    {isYoyMetric ? (
-                      <div style={{
-                          display: "grid",
-                          gridTemplateColumns: "72px 1fr",
-                          rowGap: "6px",
-                          columnGap: "10px",
-                          fontSize: "14px",
-                          color: "#444",
-                        }}
-                      >
-                        <div style={{ fontWeight: 500 }}>
-                          {latestAndPrevious.latestPeriod ?? "Latest"}:
-                        </div>
-                        <div style={{ fontWeight: 500 }}>
-                          {formatCompactNumber(latestAndPrevious.latestValue)}
-                        </div>
-
-                        <div style={{ fontWeight: 500 }}>
-                          {latestAndPrevious.previousPeriod ?? "Previous"}:
-                        </div>
-                        <div style={{ fontWeight: 500 }}>
-                          {formatCompactNumber(latestAndPrevious.previousValue)}
-                        </div>
-                      </div>
-                    ) : (
-                        <>
-                        <div style={{ fontSize: "16px", fontWeight: 600 }}>
-                            {formatCompactNumber(latestDependencyValue.value)}
-                        </div>
-
-                        <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
-                            {latestDependencyValue.period ?? "No period"}
-                        </div>
-                        </>
-                    )}
+                    <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
+                      {latestDependencyValue.period ?? "No period"}
                     </div>
-                );
-            })}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
