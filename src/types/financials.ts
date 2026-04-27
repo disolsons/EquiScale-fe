@@ -42,23 +42,27 @@ export type MetricTraceResponse = {
   dependencies: MetricDependencyResponse[];
 };
 
+export type ConceptPeriodSourceTraceResponse = {
+  period: string;
+  value: number | null;
+  selected_raw_tag: string | null;
+  selected_raw_label: string | null;
+  selected_source_layer: string | null;
+  raw_value: number | null;
+  is_source_overridden: boolean;
+  original_raw_tag: string | null;
+  original_raw_label: string | null;
+  original_source_layer: string | null;
+  original_value: number | null;
+  is_derived: boolean;
+};
+
 export type ConceptTraceResponse = {
   ticker: string;
   statement_type: string;
   concept: string;
   concept_values: Record<string, number | null>;
-
-  // Final effective source used
-  selected_raw_tag: string | null;
-  selected_raw_label: string | null;
-  selected_source_layer: string | null;
-  raw_values: Record<string, number | null> | null;
-
-  // Original mapped source, when overridden
-  is_source_overridden: boolean;
-  original_raw_tag: string | null;
-  original_raw_label: string | null;
-  original_source_layer: string | null;
+  source_selections_by_period: Record<string, ConceptPeriodSourceTraceResponse>;
 };
 
 export type CompanyProfileResponse = {
