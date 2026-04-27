@@ -156,7 +156,7 @@ function MetricCard({
           fontWeight: 600,
         }}
       >
-        Formula
+        Details
       </button>
     </div>
   );

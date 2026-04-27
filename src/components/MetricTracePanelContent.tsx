@@ -11,30 +11,15 @@ type MetricTracePanelContentProps = {
   errorMessage: string | null;
 };
 
-function getLatestAndPreviousValues(values: Record<string, number | null>): {
-  latestPeriod: string | null;
-  latestValue: number | null;
-  previousPeriod: string | null;
-  previousValue: number | null;
-} {
-  const periods = Object.keys(values).sort().reverse();
-
-  const latestPeriod = periods[0] ?? null;
-  const previousPeriod = periods[1] ?? null;
-
-  return {
-    latestPeriod,
-    latestValue: latestPeriod ? values[latestPeriod] ?? null : null,
-    previousPeriod,
-    previousValue: previousPeriod ? values[previousPeriod] ?? null : null,
-  };
+function getSortedPeriods(values: Record<string, number | null>): string[] {
+  return Object.keys(values).sort().reverse();
 }
 
 function getLatestValue(values: Record<string, number | null>): {
   period: string | null;
   value: number | null;
 } {
-  const periods = Object.keys(values).sort().reverse();
+  const periods = getSortedPeriods(values);
 
   for (const period of periods) {
     const value = values[period];
@@ -86,6 +71,8 @@ export default function MetricTracePanelContent({
       ? trace.suppression_reasons[latestMetricValue.period] ?? null
       : null;
 
+  const metricPeriods = getSortedPeriods(trace.metric_values);
+
   return (
     <div style={{ display: "grid", gap: "20px" }}>
       <section>
@@ -120,13 +107,13 @@ export default function MetricTracePanelContent({
           {trace.formula}
         </div>
         <div style={{ fontSize: "13px", color: "#666", marginTop: "8px" }}>
-          Based on the latest available period for each dependency.
+          Metric and dependency values by period are shown below.
         </div>
       </section>
 
       <section>
         <div style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
-          Metric result
+          Latest available metric result
           {latestMetricValue.period ? ` (${latestMetricValue.period})` : ""}
         </div>
         <div style={{ fontSize: "24px", fontWeight: 700 }}>
@@ -147,22 +134,74 @@ export default function MetricTracePanelContent({
             {latestSuppressionReason}
           </div>
         )}
+      </section>
 
-        <div style={{ fontSize: "13px", color: "#666", marginTop: "6px" }}>
-          Calculated from the dependency values shown below.
+      <section>
+        <div style={{ fontSize: "12px", color: "#777", marginBottom: "10px" }}>
+          Metric values by period
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #eee",
+            borderRadius: "12px",
+            background: "#fff",
+            overflow: "hidden",
+          }}
+        >
+          {metricPeriods.map((period, index) => {
+            const value = trace.metric_values[period];
+            const suppressionReason = trace.suppression_reasons?.[period] ?? null;
+
+            return (
+              <div
+                key={period}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "120px 1fr",
+                  gap: "12px",
+                  padding: "12px 14px",
+                  borderTop: index === 0 ? "none" : "1px solid #f1f1f1",
+                }}
+              >
+                <div style={{ fontSize: "13px", color: "#666", fontWeight: 600 }}>
+                  {period}
+                </div>
+
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 600 }}>
+                    {formatMetricValue(
+                      value,
+                      metricDisplayConfig?.format ?? "number"
+                    )}
+                  </div>
+
+                  {suppressionReason && (
+                    <div
+                      style={{
+                        marginTop: "4px",
+                        fontSize: "12px",
+                        color: "#b45309",
+                      }}
+                    >
+                      {suppressionReason}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
       <section>
         <div style={{ fontSize: "12px", color: "#777", marginBottom: "10px" }}>
-          Dependencies
+          Dependencies by period
         </div>
 
         <div style={{ display: "grid", gap: "12px" }}>
           {trace.dependencies.map((dependency) => {
-            const isYoyMetric = trace.metric_name.endsWith("_growth_yoy");
-            const latestDependencyValue = getLatestValue(dependency.values);
-            const latestAndPrevious = getLatestAndPreviousValues(dependency.values);
+            const dependencyPeriods = getSortedPeriods(dependency.values);
 
             return (
               <div
@@ -178,46 +217,39 @@ export default function MetricTracePanelContent({
                   {dependency.concept}
                 </div>
 
-                <div style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
+                <div style={{ fontSize: "13px", color: "#666", marginBottom: "10px" }}>
                   Statement: {dependency.statement_type ?? "Derived / unresolved"}
                 </div>
 
-                {isYoyMetric ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "72px 1fr",
-                      rowGap: "6px",
-                      columnGap: "10px",
-                      fontSize: "14px",
-                      color: "#444",
-                    }}
-                  >
-                    <div style={{ fontWeight: 500 }}>
-                      {latestAndPrevious.latestPeriod ?? "Latest"}:
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "8px",
+                  }}
+                >
+                  {dependencyPeriods.length > 0 ? (
+                    dependencyPeriods.map((period) => (
+                      <div
+                        key={period}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "120px 1fr",
+                          gap: "12px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        <div style={{ color: "#666", fontWeight: 500 }}>{period}</div>
+                        <div style={{ fontWeight: 500 }}>
+                          {formatCompactNumber(dependency.values[period])}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: "13px", color: "#888" }}>
+                      No values available.
                     </div>
-                    <div style={{ fontWeight: 500 }}>
-                      {formatCompactNumber(latestAndPrevious.latestValue)}
-                    </div>
-
-                    <div style={{ fontWeight: 500 }}>
-                      {latestAndPrevious.previousPeriod ?? "Previous"}:
-                    </div>
-                    <div style={{ fontWeight: 500 }}>
-                      {formatCompactNumber(latestAndPrevious.previousValue)}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: "16px", fontWeight: 600 }}>
-                      {formatCompactNumber(latestDependencyValue.value)}
-                    </div>
-
-                    <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>
-                      {latestDependencyValue.period ?? "No period"}
-                    </div>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
