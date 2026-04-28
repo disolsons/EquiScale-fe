@@ -299,6 +299,7 @@ function AvailableInputs({
 export default function CustomFormulaPanel({ ticker }: CustomFormulaPanelProps) {
   const [formulaName, setFormulaName] = useState("Custom FCF Margin");
   const [expression, setExpression] = useState("free_cash_flow / revenue");
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const mutation = useCalculateCustomFormula(ticker);
 
@@ -324,124 +325,172 @@ export default function CustomFormulaPanel({ ticker }: CustomFormulaPanelProps) 
         padding: "24px",
       }}
     >
-      <div style={{ marginBottom: "18px" }}>
-        <h3 style={{ margin: 0, fontSize: "20px" }}>Custom formula</h3>
-        <p
-          style={{
-            margin: "6px 0 0",
-            color: "#666",
-            fontSize: "14px",
-            lineHeight: 1.5,
-          }}
-        >
-          Calculate an ad hoc metric using normalized concepts or existing
-          metrics.
-        </p>
-      </div>
-
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          mutation.mutate({
-            formula_name: formulaName.trim(),
-            expression: expression.trim(),
-          });
-        }}
+      <div
         style={{
-          display: "grid",
-          gap: "14px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+          marginBottom: isMinimized ? 0 : "18px",
         }}
       >
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "13px",
-              fontWeight: 600,
-              marginBottom: "6px",
-              color: "#444",
-            }}
-          >
-            Formula name
-          </label>
-          <input
-            value={formulaName}
-            onChange={(event) => setFormulaName(event.target.value)}
-            placeholder="e.g. Custom FCF Margin"
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              fontSize: "14px",
-            }}
-          />
+          <h3 style={{ margin: 0, fontSize: "20px" }}>Custom formula</h3>
+          {!isMinimized ? (
+            <p
+              style={{
+                margin: "6px 0 0",
+                color: "#666",
+                fontSize: "14px",
+                lineHeight: 1.5,
+              }}
+            >
+              Calculate an ad hoc metric using normalized concepts or existing
+              metrics.
+            </p>
+          ) : mutation.data ? (
+            <p
+              style={{
+                margin: "6px 0 0",
+                color: "#666",
+                fontSize: "13px",
+                lineHeight: 1.5,
+                fontFamily: "monospace",
+                wordBreak: "break-word",
+              }}
+            >
+              Latest: {mutation.data.formula_name}
+            </p>
+          ) : null}
         </div>
 
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "13px",
-              fontWeight: 600,
-              marginBottom: "6px",
-              color: "#444",
-            }}
-          >
-            Expression
-          </label>
-          <input
-            value={expression}
-            onChange={(event) => setExpression(event.target.value)}
-            placeholder="e.g. (operating_cash_flow - capital_expenditures) / revenue"
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              fontSize: "14px",
-              fontFamily: "monospace",
-            }}
-          />
-        </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            style={{
-              padding: "10px 14px",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              background: mutation.isPending ? "#f3f4f6" : "#fff",
-              cursor: mutation.isPending ? "not-allowed" : "pointer",
-              fontWeight: 600,
-            }}
-          >
-            {mutation.isPending ? "Calculating..." : "Calculate formula"}
-          </button>
-        </div>
-      </form>
-
-      <AvailableInputs onInsert={insertInputIntoExpression} />
-
-      {mutation.isError ? (
-        <div
+        <button
+          type="button"
+          onClick={() => setIsMinimized((current) => !current)}
+          aria-expanded={!isMinimized}
           style={{
-            marginTop: "18px",
-            padding: "14px",
-            border: "1px solid #f0caca",
-            borderRadius: "12px",
-            background: "#fff5f5",
-            color: "#8a2d2d",
-            fontSize: "14px",
+            flexShrink: 0,
+            padding: "7px 10px",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            background: "#fff",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: 600,
+            color: "#444",
           }}
         >
-          {mutation.error.message}
-        </div>
+          {isMinimized ? "Expand" : "Minimize"}
+        </button>
+      </div>
+
+      {!isMinimized ? (
+        <>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              mutation.mutate({
+                formula_name: formulaName.trim(),
+                expression: expression.trim(),
+              });
+            }}
+            style={{
+              display: "grid",
+              gap: "14px",
+            }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "6px",
+                  color: "#444",
+                }}
+              >
+                Formula name
+              </label>
+              <input
+                value={formulaName}
+                onChange={(event) => setFormulaName(event.target.value)}
+                placeholder="e.g. Custom FCF Margin"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                }}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "6px",
+                  color: "#444",
+                }}
+              >
+                Expression
+              </label>
+              <input
+                value={expression}
+                onChange={(event) => setExpression(event.target.value)}
+                placeholder="e.g. (operating_cash_flow - capital_expenditures) / revenue"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  fontSize: "14px",
+                  fontFamily: "monospace",
+                }}
+              />
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={mutation.isPending}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid #ddd",
+                  background: mutation.isPending ? "#f3f4f6" : "#fff",
+                  cursor: mutation.isPending ? "not-allowed" : "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                {mutation.isPending ? "Calculating..." : "Calculate formula"}
+              </button>
+            </div>
+          </form>
+
+          <AvailableInputs onInsert={insertInputIntoExpression} />
+
+          {mutation.isError ? (
+            <div
+              style={{
+                marginTop: "18px",
+                padding: "14px",
+                border: "1px solid #f0caca",
+                borderRadius: "12px",
+                background: "#fff5f5",
+                color: "#8a2d2d",
+                fontSize: "14px",
+              }}
+            >
+              {mutation.error.message}
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       {mutation.data ? <FormulaResultTable result={mutation.data} /> : null}

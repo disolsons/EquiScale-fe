@@ -30,6 +30,7 @@ function formatSourceLayer(sourceLayer: string | null): string {
   const labels: Record<string, string> = {
     entity_facts_statement: "Entity facts statement",
     financials_rendered_statement: "Rendered financial statement",
+    concept_fallback_formula: "Concept fallback formula",
     derived: "Derived",
   };
 
@@ -196,6 +197,34 @@ function SourceByPeriodBlock({
                 </div>
               </div>
 
+              {row.is_derived ? (
+                <div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#777",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Derived formula
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      fontFamily: "monospace",
+                      color: "#444",
+                      wordBreak: "break-word",
+                      background: "#f7f7f7",
+                      border: "1px solid #eee",
+                      borderRadius: "8px",
+                      padding: "8px",
+                    }}
+                  >
+                    {row.derived_formula ?? "No formula available"}
+                  </div>
+                </div>
+              ) : null}
+
               <div>
                 <div
                   style={{
@@ -290,6 +319,101 @@ function OriginalSourceBlock({
         background: "#fff",
       }}
     >
+      <div style={{ fontSize: "12px", color: "#777", marginBottom: "10px" }}>
+        Original mapped source
+      </div>
+
+      <div style={{ display: "grid", gap: "12px" }}>
+        {rowsWithOriginalSource.map((row) => (
+          <div
+            key={row.period}
+            style={{
+              border: "1px solid #eee",
+              borderRadius: "10px",
+              padding: "12px",
+              background: "#fafafa",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "72px 1fr",
+                columnGap: "10px",
+                marginBottom: "10px",
+              }}
+            >
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>
+                {row.period}
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: 700 }}>
+                {formatCompactNumber(row.original_value)}
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: "8px" }}>
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#777",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Original source
+                </div>
+                <div style={{ fontSize: "14px", color: "#444" }}>
+                  {formatSourceLayer(row.original_source_layer)}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#777",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Original filing line item
+                </div>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    color: "#444",
+                    lineHeight: 1.4,
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {row.original_raw_label ??
+                    "No original filing label available"}
+                </div>
+              </div>
+
+              <div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#777",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Original SEC tag
+                </div>
+                <div
+                  style={{
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    color: "#444",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {row.original_raw_tag ?? "No original raw tag available"}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -358,8 +482,8 @@ export default function ConceptTracePanelContent({
         <div style={{ fontSize: "14px", color: "#444", lineHeight: 1.5 }}>
           These values were selected by the pipeline as the source for the
           normalized concept <code>{trace.concept}</code>. Source information is
-          now shown per period because a concept can use different tags or source
-          layers across fiscal years.
+          now shown per period because a concept can use different tags, source
+          layers, or fallback formulas across fiscal years.
         </div>
       </section>
     </div>

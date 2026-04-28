@@ -45,16 +45,20 @@ export type MetricTraceResponse = {
 export type ConceptPeriodSourceTraceResponse = {
   period: string;
   value: number | null;
+
   selected_raw_tag: string | null;
   selected_raw_label: string | null;
   selected_source_layer: string | null;
   raw_value: number | null;
+
   is_source_overridden: boolean;
   original_raw_tag: string | null;
   original_raw_label: string | null;
   original_source_layer: string | null;
   original_value: number | null;
+
   is_derived: boolean;
+  derived_formula: string | null;
 };
 
 export type ConceptTraceResponse = {
